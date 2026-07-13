@@ -2,29 +2,26 @@
 
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import {
   Search,
-  ArrowUpFromLine,
-  Plus,
   MoreVertical,
   ChevronLeft,
   ChevronRight,
   Headphones,
   ArrowUpAZ,
   ArrowDownAZ,
+  Plus,
 } from "lucide-react";
-import Link from "next/link";
-import BulkImportModal from "./BulkImportModal";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
-// --- Dynamic API Types Mapping ---
-interface InventoryItem {
+interface AuctionItem {
   _id: string;
   inventoryId: string;
   title: string;
   category: string;
   condition: string;
-  quantity: number;
 }
 
 interface MetaData {
@@ -34,47 +31,47 @@ interface MetaData {
   totalPage: number;
 }
 
-interface InventoryResponse {
+interface AuctionResponse {
   success: boolean;
   message: string;
   statusCode: number;
-  data: InventoryItem[];
+  data: AuctionItem[];
   meta: MetaData;
 }
 
-export default function ProductDashboard() {
-  const [bulkModalOpen, setBulkModalOpen] = useState(false);
+export default function ListOfauoction() {
+  const router = useRouter();
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
 
-  // Search and Pagination States
+  // Search, Pagination, Sort and Selected Items States
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [order, setOrder] = useState<"asc" | "desc">("asc");
-  // Fetch Inventory dynamic data inside TanStack useQuery
-  const { data: responseData, isLoading } = useQuery<InventoryResponse>({
-    queryKey: ["inventoryData", searchTerm, page, limit, order],
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  // Fetch Auction data
+  const { data: responseData, isLoading } = useQuery<AuctionResponse>({
+    queryKey: ["auctionData", searchTerm, page, limit, order],
     queryFn: async () => {
       if (!token) {
         throw new Error("Please login again");
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/inventory?searchTerm=${searchTerm}&page=${page}&limit=${limit}&sortOrder=${order}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/auctions?searchTerm=${searchTerm}&page=${page}&limit=${limit}&sortOrder=${order}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        },
+        }
       );
 
       const result = await response.json();
-
       if (!response.ok || result.success === false) {
-        throw new Error(result.message || "Failed to fetch inventory data");
+        throw new Error(result.message || "Failed to fetch auction data");
       }
-
       return result;
     },
     enabled: !!token,
@@ -85,43 +82,66 @@ export default function ProductDashboard() {
   const totalProducts = meta?.total || 0;
   const totalPages = meta?.totalPage || 1;
 
-  // Pagination Handler
+  // Checkbox Handlers
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const allIds = products.map((p) => p._id);
+      setSelectedProductIds(allIds);
+    } else {
+      setSelectedProductIds([]);
+    }
+  };
+
+  const handleSelectItem = (id: string) => {
+    setSelectedProductIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
   };
 
+  // Click Action: Transfer selected products data layer to local storage dynamic router payload
+  const handlePublishNavigation = () => {
+    if (selectedProductIds.length === 0) {
+      toast.error("Please select at least one product to publish on auction.");
+      return;
+    }
+    const selectedProductsDetails = products.filter((p) =>
+      selectedProductIds.includes(p._id)
+    );
+    localStorage.setItem("selected_auction_products", JSON.stringify(selectedProductsDetails));
+    router.push("/dashboard/auctions/add"); // Adjust route path destination properly
+  };
+
   return (
     <div className="w-full container bg-white rounded-xl border border-gray-100 shadow-sm p-8 font-sans">
       {/* --- Top Action Bar --- */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        {/* Title and Count dynamically from meta */}
         <div className="text-lg font-semibold text-gray-800">
-          All Product{" "}
+          Auction Product{" "}
           <span className="text-[#FF5A1F] font-medium ml-1">
             ({isLoading ? "..." : totalProducts})
           </span>
         </div>
 
-        {/* Controls Group */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Search Input */}
           <div className="relative min-w-[240px]">
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
-                setPage(1); // resetting layout state to first page on search
+                setPage(1);
               }}
               placeholder="Search Products......"
               className="w-full h-10 pl-4 pr-10 bg-[#F5F7FA] text-sm text-gray-600 placeholder-gray-400 rounded-lg outline-none focus:ring-1 focus:ring-gray-200 transition-all"
             />
             <Search className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
           </div>
-
-          {/* Filter Button */}
 
           <button
             onClick={() => setOrder(order === "asc" ? "desc" : "asc")}
@@ -134,30 +154,13 @@ export default function ProductDashboard() {
             )}
           </button>
 
-          {/* Bulk Import Button */}
+          {/* Dynamically Styled Action Button conditional logic trigger layout tracking */}
           <button
-            onClick={() => setBulkModalOpen(true)}
-            className="flex items-center gap-2 h-10 px-4 bg-white border border-gray-200 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            onClick={handlePublishNavigation}
+            className="h-10 px-4 bg-[#FF5A1F] text-sm font-medium text-white rounded-lg hover:bg-[#e04e18] transition-colors shadow-sm flex items-center gap-1.5"
           >
-            <ArrowUpFromLine className="w-4 h-4 text-gray-500" />
-            Bulk Import
-          </button>
-
-          <BulkImportModal
-            isOpen={bulkModalOpen}
-            onClose={() => setBulkModalOpen(false)}
-            token={token || ""}
-          />
-
-          {/* Add Item Button */}
-          <button className="h-10 px-4 bg-[#FF5A1F] text-sm font-medium text-white rounded-lg hover:bg-[#e04e18] transition-colors shadow-sm">
-            <Link
-              href="/dashboard/inventory/add"
-              className="flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              Add Item
-            </Link>
+            <Plus className="w-4 h-4" />
+            Auction Publish {selectedProductIds.length > 0 && `(${selectedProductIds.length})`}
           </button>
         </div>
       </div>
@@ -167,77 +170,65 @@ export default function ProductDashboard() {
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-[#E2EAF8] text-sm font-medium text-[#3A5B77]">
-              <th className="py-3 px-6 rounded-l-lg first-letter:uppercase">
-                Product Id
+              <th className="py-3 px-4 w-12 rounded-l-lg">
+                <input
+                  type="checkbox"
+                  onChange={handleSelectAll}
+                  checked={products.length > 0 && selectedProductIds.length === products.length}
+                  className="w-4 h-4 rounded text-[#FF5A1F] border-gray-300 focus:ring-[#FF5A1F] cursor-pointer"
+                />
               </th>
+              <th className="py-3 px-4">Product Id</th>
               <th className="py-3 px-4">Product Name</th>
               <th className="py-3 px-4">Category</th>
               <th className="py-3 px-4">Condition</th>
-              <th className="py-3 px-4">Quantity</th>
               <th className="py-3 px-6 text-center rounded-r-lg">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="py-8 text-center text-sm text-gray-400"
-                >
+                <td colSpan={6} className="py-8 text-center text-sm text-gray-400">
                   Loading Products...
                 </td>
               </tr>
             ) : products.length > 0 ? (
               products.map((product) => (
-                <tr
-                  key={product._id}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  {/* Product ID from InventoryId */}
-                  <td className="py-4 px-6 text-sm font-medium text-gray-700 whitespace-nowrap">
+                <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
+                  <td className="py-4 px-4">
+                    <input
+                      type="checkbox"
+                      checked={selectedProductIds.includes(product._id)}
+                      onChange={() => handleSelectItem(product._id)}
+                      className="w-4 h-4 rounded text-[#FF5A1F] border-gray-300 focus:ring-[#FF5A1F] cursor-pointer"
+                    />
+                  </td>
+                  <td className="py-4 px-4 text-sm font-medium text-gray-700 whitespace-nowrap">
                     {product.inventoryId}
                   </td>
-
-                  {/* Product Image & Name */}
                   <td className="py-4 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-blue-500 flex-shrink-0">
                         <Headphones className="w-4 h-4" />
                       </div>
-                      <span
-                        className="text-sm font-medium text-gray-700 max-w-[160px] truncate"
-                        title={product.title}
-                      >
+                      <span className="text-sm font-medium text-gray-700 max-w-[160px] truncate" title={product.title}>
                         {product.title}
                       </span>
                     </div>
                   </td>
-
-                  {/* Category */}
                   <td className="py-4 px-4 text-sm text-gray-600 whitespace-nowrap">
                     {product.category}
                   </td>
-
-                  {/* Condition Status Indicator styling */}
                   <td className="py-4 px-4 whitespace-nowrap">
                     <div className="flex items-center gap-2 text-sm text-gray-700 font-medium capitalize">
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          product.condition.toLowerCase() === "new"
-                            ? "bg-[#10B981]"
-                            : "bg-[#F97316]"
+                          product.condition.toLowerCase() === "new" ? "bg-[#10B981]" : "bg-[#F97316]"
                         }`}
                       />
                       {product.condition.replace("_", " ")}
                     </div>
                   </td>
-
-                  {/* Quantity */}
-                  <td className="py-4 px-4 text-sm text-gray-600 font-medium whitespace-nowrap">
-                    {product.quantity}
-                  </td>
-
-                  {/* Action Row Button */}
                   <td className="py-4 px-6 text-center whitespace-nowrap">
                     <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
                       <MoreVertical className="w-4 h-4" />
@@ -247,10 +238,7 @@ export default function ProductDashboard() {
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={6}
-                  className="py-8 text-center text-sm text-gray-400"
-                >
+                <td colSpan={6} className="py-8 text-center text-sm text-gray-400">
                   No products found.
                 </td>
               </tr>
@@ -259,44 +247,34 @@ export default function ProductDashboard() {
         </table>
       </div>
 
-      {/* --- Dynamic Pagination Footer with API data mapping --- */}
+      {/* --- Pagination Footer --- */}
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-2">
-          {/* Previous Button */}
           <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page === 1}
-            className="flex items-center gap-1 h-9 px-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 h-9 px-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             <ChevronLeft className="w-4 h-4" />
             Previous
           </button>
-
-          {/* Page Numbers Mapping */}
           <div className="flex items-center gap-1.5">
-            {Array.from({ length: totalPages }, (_, index) => {
-              const pageNumber = index + 1;
-              return (
-                <button
-                  key={pageNumber}
-                  onClick={() => handlePageChange(pageNumber)}
-                  className={`w-8 h-8 flex items-center justify-center text-sm font-semibold rounded-md transition-colors ${
-                    page === pageNumber
-                      ? "bg-[#D9E4F7] text-[#2563EB]"
-                      : "text-gray-500 border border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {pageNumber}
-                </button>
-              );
-            })}
+            {Array.from({ length: totalPages }, (_, index) => (
+              <button
+                key={index + 1}
+                onClick={() => handlePageChange(index + 1)}
+                className={`w-8 h-8 flex items-center justify-center text-sm font-semibold rounded-md ${
+                  page === index + 1 ? "bg-[#D9E4F7] text-[#2563EB]" : "text-gray-500 border border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                {index + 1}
+              </button>
+            ))}
           </div>
-
-          {/* Next Button */}
           <button
             onClick={() => handlePageChange(page + 1)}
             disabled={page === totalPages}
-            className="flex items-center gap-1 h-9 px-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1 h-9 px-3 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
             Next
             <ChevronRight className="w-4 h-4" />
