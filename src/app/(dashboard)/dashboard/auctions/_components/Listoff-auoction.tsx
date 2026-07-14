@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
   Search,
@@ -12,6 +12,7 @@ import {
   ArrowUpAZ,
   ArrowDownAZ,
   Plus,
+  Trash2,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
@@ -43,6 +44,8 @@ export default function ListOfauoction() {
   const router = useRouter();
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   // Search, Pagination, Sort and Selected Items States
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,7 +68,7 @@ export default function ListOfauoction() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const result = await response.json();
@@ -94,7 +97,7 @@ export default function ListOfauoction() {
 
   const handleSelectItem = (id: string) => {
     setSelectedProductIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -111,10 +114,55 @@ export default function ListOfauoction() {
       return;
     }
     const selectedProductsDetails = products.filter((p) =>
-      selectedProductIds.includes(p._id)
+      selectedProductIds.includes(p._id),
     );
-    localStorage.setItem("selected_auction_products", JSON.stringify(selectedProductsDetails));
+    localStorage.setItem(
+      "selected_auction_products",
+      JSON.stringify(selectedProductsDetails),
+    );
     router.push("/dashboard/auctions/add"); // Adjust route path destination properly
+  };
+
+  const deleteMutation = useMutation({
+    mutationKey: ["publishAuction"],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: async (payload: any) => {
+      if (!token) {
+        throw new Error("Authorization token is missing. Please login again.");
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${payload.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || "Failed to publish auction");
+      }
+
+      return result;
+    },
+    onSuccess: async (data) => {
+      toast.success(data.message || "Auction deleted successfully!");
+      await queryClient.invalidateQueries({
+        queryKey: ["auctionData"],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Something went wrong while deleting.");
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate({ id });
   };
 
   return (
@@ -160,7 +208,8 @@ export default function ListOfauoction() {
             className="h-10 px-4 bg-[#FF5A1F] text-sm font-medium text-white rounded-lg hover:bg-[#e04e18] transition-colors shadow-sm flex items-center gap-1.5"
           >
             <Plus className="w-4 h-4" />
-            Auction Publish {selectedProductIds.length > 0 && `(${selectedProductIds.length})`}
+            Auction Publish{" "}
+            {selectedProductIds.length > 0 && `(${selectedProductIds.length})`}
           </button>
         </div>
       </div>
@@ -174,7 +223,10 @@ export default function ListOfauoction() {
                 <input
                   type="checkbox"
                   onChange={handleSelectAll}
-                  checked={products.length > 0 && selectedProductIds.length === products.length}
+                  checked={
+                    products.length > 0 &&
+                    selectedProductIds.length === products.length
+                  }
                   className="w-4 h-4 rounded text-[#FF5A1F] border-gray-300 focus:ring-[#FF5A1F] cursor-pointer"
                 />
               </th>
@@ -188,13 +240,19 @@ export default function ListOfauoction() {
           <tbody className="divide-y divide-gray-100">
             {isLoading ? (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-sm text-gray-400">
+                <td
+                  colSpan={6}
+                  className="py-8 text-center text-sm text-gray-400"
+                >
                   Loading Products...
                 </td>
               </tr>
             ) : products.length > 0 ? (
               products.map((product) => (
-                <tr key={product._id} className="hover:bg-gray-50/50 transition-colors">
+                <tr
+                  key={product._id}
+                  className="hover:bg-gray-50/50 transition-colors"
+                >
                   <td className="py-4 px-4">
                     <input
                       type="checkbox"
@@ -211,7 +269,10 @@ export default function ListOfauoction() {
                       <div className="w-9 h-9 bg-blue-50 border border-blue-100 rounded-lg flex items-center justify-center text-blue-500 flex-shrink-0">
                         <Headphones className="w-4 h-4" />
                       </div>
-                      <span className="text-sm font-medium text-gray-700 max-w-[160px] truncate" title={product.title}>
+                      <span
+                        className="text-sm font-medium text-gray-700 max-w-[160px] truncate"
+                        title={product.title}
+                      >
                         {product.title}
                       </span>
                     </div>
@@ -223,22 +284,49 @@ export default function ListOfauoction() {
                     <div className="flex items-center gap-2 text-sm text-gray-700 font-medium capitalize">
                       <span
                         className={`w-2 h-2 rounded-full ${
-                          product.condition.toLowerCase() === "new" ? "bg-[#10B981]" : "bg-[#F97316]"
+                          product.condition.toLowerCase() === "new"
+                            ? "bg-[#10B981]"
+                            : "bg-[#F97316]"
                         }`}
                       />
                       {product.condition.replace("_", " ")}
                     </div>
                   </td>
-                  <td className="py-4 px-6 text-center whitespace-nowrap">
-                    <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                  <td className="py-4 px-6 text-center whitespace-nowrap relative">
+                    <button
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === product._id ? null : product._id,
+                        )
+                      }
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                       <MoreVertical className="w-4 h-4" />
                     </button>
+
+                    {openDropdown === product._id && (
+                      <div className="absolute right-6 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                        <button
+                          onClick={() => {
+                            handleDelete(product._id);
+                            setOpenDropdown(null);
+                          }}
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="py-8 text-center text-sm text-gray-400">
+                <td
+                  colSpan={6}
+                  className="py-8 text-center text-sm text-gray-400"
+                >
                   No products found.
                 </td>
               </tr>
@@ -264,7 +352,9 @@ export default function ListOfauoction() {
                 key={index + 1}
                 onClick={() => handlePageChange(index + 1)}
                 className={`w-8 h-8 flex items-center justify-center text-sm font-semibold rounded-md ${
-                  page === index + 1 ? "bg-[#D9E4F7] text-[#2563EB]" : "text-gray-500 border border-gray-200 hover:bg-gray-50"
+                  page === index + 1
+                    ? "bg-[#D9E4F7] text-[#2563EB]"
+                    : "text-gray-500 border border-gray-200 hover:bg-gray-50"
                 }`}
               >
                 {index + 1}

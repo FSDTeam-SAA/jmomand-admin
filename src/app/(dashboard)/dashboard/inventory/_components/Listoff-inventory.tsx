@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Search,
   ArrowUpFromLine,
@@ -12,10 +12,12 @@ import {
   Headphones,
   ArrowUpAZ,
   ArrowDownAZ,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import BulkImportModal from "./BulkImportModal";
 import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 // --- Dynamic API Types Mapping ---
 interface InventoryItem {
@@ -46,6 +48,8 @@ export default function ProductDashboard() {
   const [bulkModalOpen, setBulkModalOpen] = useState(false);
   const { data: session } = useSession();
   const token = session?.user?.accessToken;
+  const queryClient = useQueryClient();
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   // Search and Pagination States
   const [searchTerm, setSearchTerm] = useState("");
@@ -90,6 +94,48 @@ export default function ProductDashboard() {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
     }
+  };
+
+  const deleteMutation = useMutation({
+    mutationKey: ["publishAuction"],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mutationFn: async (payload: any) => {
+      if (!token) {
+        throw new Error("Authorization token is missing. Please login again.");
+      }
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${payload.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        throw new Error(result.message || "Failed to publish auction");
+      }
+
+      return result;
+    },
+    onSuccess: async (data) => {
+      toast.success(data.message || "Auction deleted successfully!");
+      await queryClient.invalidateQueries({
+        queryKey: ["auctionData"],
+      });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Something went wrong while deleting.");
+    },
+  });
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate({ id });
   };
 
   return (
@@ -238,10 +284,32 @@ export default function ProductDashboard() {
                   </td>
 
                   {/* Action Row Button */}
-                  <td className="py-4 px-6 text-center whitespace-nowrap">
-                    <button className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors">
+                  <td className="py-4 px-6 text-center whitespace-nowrap relative">
+                    <button
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === product._id ? null : product._id,
+                        )
+                      }
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
                       <MoreVertical className="w-4 h-4" />
                     </button>
+
+                    {openDropdown === product._id && (
+                      <div className="absolute right-6 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                        <button
+                          onClick={() => {
+                            handleDelete(product._id);
+                            setOpenDropdown(null);
+                          }}
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))
