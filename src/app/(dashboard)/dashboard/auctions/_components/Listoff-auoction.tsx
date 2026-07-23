@@ -13,9 +13,11 @@ import {
   ArrowDownAZ,
   Plus,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 interface AuctionItem {
   _id: string;
@@ -162,6 +164,7 @@ export default function ListOfauoction() {
   });
 
   const handleDelete = (id: string) => {
+
     deleteMutation.mutate({ id });
   };
 
@@ -316,6 +319,14 @@ export default function ListOfauoction() {
                           <Trash2 className="w-4 h-4 mr-2" />
                           Delete
                         </button>
+                          <Link href={`/dashboard/inventory/${product._id}`}>
+                            <button
+                          className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edite
+                        </button>
+                          </Link>
                       </div>
                     )}
                   </td>

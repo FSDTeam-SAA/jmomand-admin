@@ -13,6 +13,7 @@ import {
   ArrowUpAZ,
   ArrowDownAZ,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import Link from "next/link";
 import BulkImportModal from "./BulkImportModal";
@@ -303,6 +304,14 @@ export default function ProductDashboard() {
 
                     {openDropdown === product._id && (
                       <div className="absolute right-6 mt-2 w-36 bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                        <Link
+                          href={`/dashboard/inventory/${product._id}`}
+                          onClick={() => setOpenDropdown(null)}
+                          className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit
+                        </Link>
                         <button
                           onClick={() => {
                             handleDelete(product._id);
