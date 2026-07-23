@@ -67,7 +67,9 @@ export function AppSidebar() {
         {navItems.map((item) => {
           const Icon = item.icon;
           const active =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+            item.href === "/dashboard"
+              ? pathname === "/dashboard"
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
           return (
             <Link
