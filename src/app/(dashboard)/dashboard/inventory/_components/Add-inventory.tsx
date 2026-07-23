@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useId, useRef, useState } from "react";
-import { Plus, X, UploadCloud, Bold, Italic, List, Link2 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Plus, X, UploadCloud,  } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
@@ -31,10 +31,35 @@ type ImagePreview = {
   name: string;
   size: number;
   type: string;
-  file: File;
+  file?: File;
 };
 
-export default function AddInventory() {
+type Category = {
+  category: string;
+  categoryImage?: { public_id: string; url: string } | null;
+};
+
+type ProductDetails = {
+  _id: string;
+  title: string;
+  description: string;
+  category: string;
+  condition: string;
+  type: ListingType;
+  color?: string[];
+  quantity?: number;
+  price?: number;
+  manufacturer?: string;
+  day?: string;
+  reservePrice?: number;
+  images?: { public_id: string; url: string }[];
+  categoryImage?: { public_id: string; url: string } | null;
+};
+
+type ProductDetailsResponse = { success: boolean; message?: string; data: ProductDetails };
+type CategoriesResponse = { success: boolean; message?: string; data: Category[] };
+
+export default function AddInventory({ productId }: { productId?: string }) {
   const imageInputId = useId();
   const categoryImageInputId = useId();
   const imagesRef = useRef<ImagePreview[]>([]);
@@ -42,16 +67,18 @@ export default function AddInventory() {
   const token = session?.user?.accessToken;
   const queryClient = useQueryClient();
   const router = useRouter();
+  const isEditing = Boolean(productId);
 
   // Form States
   const [productName, setProductName] = useState("");
   const [condition, setCondition] = useState("");
   const [category, setCategory] = useState("");
+  const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
   const [categoryImage, setCategoryImage] = useState<ImagePreview | null>(null);
   
   const [manufacturer, setManufacturer] = useState("");
   const [description, setDescription] = useState("");
-  const [detailDescription, setDetailDescription] = useState("");
+  // const [detailDescription, setDetailDescription] = useState("");
   
   // Conditionally Controlled States
   const [type, setType] = useState<ListingType>("for_sale");
@@ -65,6 +92,60 @@ export default function AddInventory() {
 
   // Multiple Images Array State
   const [images, setImages] = useState<ImagePreview[]>([]);
+
+  const { data: categoriesResponse } = useQuery<CategoriesResponse>({
+    queryKey: ["productCategories"],
+    queryFn: async () => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products/categories`);
+      const data = (await response.json().catch(() => ({}))) as CategoriesResponse;
+      if (!response.ok || data.success === false) throw new Error(data.message || "Failed to fetch categories");
+      return data;
+    },
+  });
+
+  const { data: productResponse, isLoading: isProductLoading } = useQuery<ProductDetailsResponse>({
+    queryKey: ["product", productId],
+    queryFn: async () => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/products/${productId}`);
+      const data = (await response.json().catch(() => ({}))) as ProductDetailsResponse;
+      if (!response.ok || data.success === false) throw new Error(data.message || "Failed to fetch product");
+      return data;
+    },
+    enabled: isEditing,
+  });
+
+  useEffect(() => {
+    const product = productResponse?.data;
+    if (!product) return;
+
+    setProductName(product.title || "");
+    setDescription(product.description || "");
+    setCategory(product.category || "");
+    setCondition(product.condition || "");
+    setType(product.type || "for_sale");
+    setManufacturer(product.manufacturer || "");
+    setColors(product.color?.length ? product.color : [""]);
+    setPrice(product.price?.toString() || "");
+    setQuantity(product.quantity?.toString() || "1");
+    setDay(product.day || "");
+    setReservePrice(product.reservePrice?.toString() || "");
+    setImages((product.images || []).map((image) => ({
+      id: image.public_id,
+      url: image.url,
+      name: "Existing product image",
+      size: 0,
+      type: "image/*",
+    })));
+    if (product.categoryImage) {
+      setCategoryImage({
+        id: product.categoryImage.public_id,
+        url: product.categoryImage.url,
+        name: "Existing category image",
+        size: 0,
+        type: "image/*",
+      });
+    }
+  }, [productResponse]);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -130,12 +211,41 @@ export default function AddInventory() {
     }
   };
 
+  const handleCategoryChange = (value: string) => {
+    if (value === "__new_category__") {
+      setIsCreatingNewCategory(true);
+      setCategory("");
+      setCategoryImage(null);
+      return;
+    }
+
+    const selectedCategory = categoriesResponse?.data.find(
+      (item) => item.category === value,
+    );
+    setIsCreatingNewCategory(false);
+    setCategory(value);
+
+    if (selectedCategory?.categoryImage) {
+      setCategoryImage({
+        id: selectedCategory.categoryImage.public_id,
+        url: selectedCategory.categoryImage.url,
+        name: `${value} category image`,
+        size: 0,
+        type: "image/*",
+      });
+    } else {
+      setCategoryImage(null);
+    }
+  };
+
   // Image Upload Handlers
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files ?? []);
 
     if (selectedFiles.length > 0) {
-      const availableSlots = 5 - images.length;
+      // Updating with files replaces the backend's current image set, so show
+      // only the replacement selection instead of mixing it with old previews.
+      const availableSlots = isEditing ? 5 : 5 - images.length;
 
       if (availableSlots <= 0) {
         alert("You can upload maximum 5 product images");
@@ -152,7 +262,7 @@ export default function AddInventory() {
         file,
       })).slice(0, availableSlots);
 
-      setImages((prev) => [...prev, ...previews]);
+      setImages((prev) => isEditing ? previews : [...prev, ...previews]);
 
       if (selectedFiles.length > availableSlots) {
         alert("Only first 5 product images can be uploaded");
@@ -193,13 +303,13 @@ export default function AddInventory() {
     mutationKey: ["productMutation"],
     mutationFn: async (formData: FormData) => {
       if (!token) {
-        throw new Error("Please login again before creating a product");
+        throw new Error(`Please login again before ${isEditing ? "updating" : "creating"} a product`);
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products${isEditing ? `/${productId}` : ""}`,
         {
-          method: "POST",
+          method: isEditing ? "PATCH" : "POST",
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -210,20 +320,19 @@ export default function AddInventory() {
       const data = (await response.json().catch(() => ({}))) as ProductResponse;
 
       if (!response.ok || data.success === false) {
-        throw new Error(data.message || "Failed to create product");
+        throw new Error(data.message || `Failed to ${isEditing ? "update" : "create"} product`);
       }
 
       return data;
     },
     onSuccess: async (data) => {
-      toast.success(data.message || "Product created successfully");
+      toast.success(data.message || `Product ${isEditing ? "updated" : "created"} successfully`);
       setProductName("");
       setCondition("");
       setCategory("");
       setCategoryImage(null);
       setManufacturer("");
       setDescription("");
-      setDetailDescription("");
       setType("for_sale");
       setDay("");
       setPrice("");
@@ -245,6 +354,11 @@ export default function AddInventory() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!category.trim()) {
+      toast.error("Please select or enter a category");
+      return;
+    }
+
     if (!images.length) {
       toast.error("Please upload at least one product image");
       return;
@@ -255,11 +369,6 @@ export default function AddInventory() {
       return;
     }
 
-    if (!categoryImage) {
-      toast.error("Please upload a category image");
-      return;
-    }
-
     const formData = new FormData();
     formData.append("title", productName);
     formData.append("description", description);
@@ -267,8 +376,9 @@ export default function AddInventory() {
     formData.append("condition", condition);
     formData.append("type", type);
     
-    // Append category image
-    formData.append("categoryImage", categoryImage.file);
+    // The update API only accepts product images. New products can optionally
+    // include a category image; selected existing categories supply theirs server-side.
+    if (!isEditing && categoryImage?.file) formData.append("categoryImage", categoryImage.file);
 
     colors
       .filter((color) => color.trim() !== "")
@@ -279,7 +389,7 @@ export default function AddInventory() {
     }
 
     images.forEach((image) => {
-      formData.append("images", image.file);
+      if (image.file) formData.append("images", image.file);
     });
 
     if (type === "for_sale") {
@@ -292,6 +402,14 @@ export default function AddInventory() {
 
     productMutation.mutate(formData);
   };
+
+  if (isEditing && isProductLoading) {
+    return (
+      <div className="min-h-[320px] flex items-center justify-center text-sm text-slate-500">
+        Loading inventory item...
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50/50  flex justify-center items-start">
@@ -359,13 +477,34 @@ export default function AddInventory() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="text-[#004242] text-xs font-medium">Category *</Label>
-                  <Input
-                    placeholder="e.g. Electronics, Gadgets"
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="rounded-lg border-slate-200"
-                    required
-                  />
+                  <Select
+                    value={isCreatingNewCategory ? "__new_category__" : category || undefined}
+                    onValueChange={handleCategoryChange}
+                  >
+                    <SelectTrigger className="rounded-lg w-full border-slate-200">
+                      <SelectValue placeholder="Select an existing category" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[100]">
+                      {(categoriesResponse?.data || []).map((item) => (
+                        <SelectItem key={item.category} value={item.category}>
+                          {item.category}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__new_category__">+ Create new category</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {isCreatingNewCategory && (
+                    <Input
+                      placeholder="Enter new category name"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="rounded-lg border-slate-200"
+                      required
+                    />
+                  )}
+                  <p className="text-xs text-slate-400">
+                    Select a category to use its saved image, or create a new category.
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -381,7 +520,7 @@ export default function AddInventory() {
 
               {/* Category Image Upload */}
               <div className="space-y-2">
-                <Label className="text-[#004242] text-xs font-medium">Category Image *</Label>
+                <Label className="text-[#004242] text-xs font-medium">Category Image</Label>
                 <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-slate-50/80 transition relative cursor-pointer group">
                   <input
                     id={categoryImageInputId}
@@ -565,7 +704,7 @@ export default function AddInventory() {
             </div>
 
             {/* DETAIL DESCRIPTION WITH EDIT BAR */}
-            <div className="space-y-4 p-6 rounded-2xl border border-slate-100">
+            {/* <div className="space-y-4 p-6 rounded-2xl border border-slate-100">
               <div className="flex items-center justify-between">
                 <h3 className="text-[#004242] text-sm font-medium">Detail Description</h3>
                 <span className="text-xs text-slate-400">Formatting options enabled</span>
@@ -584,7 +723,7 @@ export default function AddInventory() {
                   className="border-0 focus-visible:ring-0 rounded-none min-h-[150px] resize-y"
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* SUBMIT BUTTON */}
             <div className="pt-2">
@@ -593,7 +732,9 @@ export default function AddInventory() {
                 disabled={productMutation.isPending}
                 className="w-full bg-[#004242] hover:bg-[#003333] text-white py-6 rounded-lg transition-colors font-semibold"
               >
-                {productMutation.isPending ? "Publishing..." : "Publish Inventory Item"}
+                {productMutation.isPending
+                  ? isEditing ? "Saving..." : "Publishing..."
+                  : isEditing ? "Save Inventory Item" : "Publish Inventory Item"}
               </Button>
             </div>
           </form>
