@@ -133,10 +133,12 @@ export function Pager({
   onPage: (page: number) => void;
 }) {
   return (
-    <Pagination
-      currentPage={page}
-      totalPages={totalPages}
-      onPageChange={onPage}
-    />
+    <div className={isFetching ? "pointer-events-none opacity-60" : undefined}>
+      <Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={onPage}
+      />
+    </div>
   );
 }
