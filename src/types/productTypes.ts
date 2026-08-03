@@ -8,6 +8,8 @@ export interface InventoryItem {
   type: string;
   quantity: number;
   price: number;
+  retailPrice?: number;
+  discountPercentage?: number;
   manufacturer?: string;
   color?: string[];
   description?: string;
