@@ -282,7 +282,19 @@ export default function ProductDashboard() {
 
                       {/* Price */}
                       <td className="py-4 px-4 font-semibold text-slate-900 whitespace-nowrap">
-                        ${product.price?.toLocaleString() || "0"}
+                        <div>${product.price?.toLocaleString() || "0"}</div>
+                        {product.retailPrice != null && product.type === "for_sale" && (
+                          <div className="mt-1 flex items-center gap-1.5 text-xs font-medium">
+                            <span className="text-slate-400 line-through">
+                              ${product.retailPrice.toLocaleString()}
+                            </span>
+                            {product.discountPercentage != null && (
+                              <span className="text-emerald-600">
+                                {product.discountPercentage}% off
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </td>
 
                       {/* Quantity */}

@@ -51,6 +51,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
   const [type, setType] = useState<ListingType>('for_sale');
   const [day, setDay] = useState('');
   const [price, setPrice] = useState('');
+  const [retailPrice, setRetailPrice] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [reservePrice, setReservePrice] = useState('');
   const [colors, setColors] = useState<string[]>(['']);
@@ -91,6 +92,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
     setManufacturer(product.manufacturer || '');
     setColors(product.color?.length ? product.color : ['']);
     setPrice(product.price?.toString() || '');
+    setRetailPrice(product.retailPrice?.toString() || '');
     setQuantity(product.quantity?.toString() || '1');
     setDay(product.day || '');
     setReservePrice(product.reservePrice?.toString() || '');
@@ -263,6 +265,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
     }
 
     setPrice('');
+    setRetailPrice('');
     setQuantity('1');
   };
 
@@ -305,6 +308,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
       setType('for_sale');
       setDay('');
       setPrice('');
+      setRetailPrice('');
       setQuantity('1');
       setReservePrice('');
       setColors(['']);
@@ -363,6 +367,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
 
     if (type === 'for_sale') {
       formData.append('price', price);
+      if (retailPrice) formData.append('retailPrice', retailPrice);
       formData.append('quantity', quantity);
     } else {
       formData.append('day', day);
@@ -523,6 +528,19 @@ export default function AddInventory({ productId }: { productId?: string }) {
                           onChange={(e) => setPrice(e.target.value)}
                           className="h-11 rounded-lg border-slate-200 bg-white focus-visible:ring-2 focus-visible:ring-[#004242]/20 focus-visible:border-[#004242] text-sm"
                           required={type === 'for_sale'}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                          Retail Price ($)
+                        </Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          placeholder="0.00"
+                          value={retailPrice}
+                          onChange={(e) => setRetailPrice(e.target.value)}
+                          className="h-11 rounded-lg border-slate-200 bg-white focus-visible:ring-2 focus-visible:ring-[#004242]/20 focus-visible:border-[#004242] text-sm"
                         />
                       </div>
                       <div className="space-y-1.5">

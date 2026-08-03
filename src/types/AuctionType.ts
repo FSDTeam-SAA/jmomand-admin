@@ -217,6 +217,7 @@ export type ProductDetails = {
   color?: string[];
   quantity?: number;
   price?: number;
+  retailPrice?: number;
   manufacturer?: string;
   day?: string;
   reservePrice?: number;
