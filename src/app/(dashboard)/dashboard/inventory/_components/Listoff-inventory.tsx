@@ -98,7 +98,7 @@ export default function ProductDashboard() {
   };
 
   return (
-    <div className="w-full space-y-6 bg-slate-50/50 p-6 rounded-2xl min-h-screen">
+    <div className="min-h-screen w-full space-y-6 rounded-2xl bg-slate-50/50 p-4 sm:p-6">
       {/* 1. Header & KPI Overview */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -199,7 +199,7 @@ export default function ProductDashboard() {
 
         {/* Products Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
+          <table className="w-full min-w-[900px] text-left text-sm text-slate-600">
             <thead className="bg-slate-50/80 text-xs font-semibold uppercase tracking-wider text-slate-500 border-b border-slate-200">
               <tr>
                 <th className="py-3.5 px-6">Product ID</th>
