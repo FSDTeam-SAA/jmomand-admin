@@ -47,8 +47,8 @@ export function AppSidebar() {
     .toUpperCase();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col overflow-hidden bg-[#061f42] text-white shadow-2xl shadow-slate-950/20 lg:flex">
-      <div className="border-b border-white/10 px-6 py-5">
+    <aside className="fixed inset-x-0 bottom-0 z-30 flex h-16 w-full overflow-x-auto overflow-y-hidden bg-[#061f42] text-white shadow-2xl shadow-slate-950/20 lg:inset-y-0 lg:left-0 lg:h-auto lg:w-64 lg:flex-col lg:overflow-hidden">
+      <div className="hidden border-b border-white/10 px-6 py-5 lg:block">
         <Link
           href="/dashboard"
           className="flex h-14 items-center justify-center rounded-xl bg-white/[0.03] ring-1 ring-white/10 transition hover:bg-white/[0.06]"
@@ -64,11 +64,11 @@ export function AppSidebar() {
         </Link>
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-4 py-5">
-        <p className="mb-3 px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+      <nav className="flex min-w-max flex-1 items-center gap-1 px-2 py-2 lg:block lg:min-w-0 lg:overflow-y-auto lg:px-4 lg:py-5">
+        <p className="mb-3 hidden px-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 lg:block">
           Main Menu
         </p>
-        <div className="space-y-1.5">
+        <div className="flex items-center gap-1 lg:block lg:space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const active =
@@ -82,7 +82,7 @@ export function AppSidebar() {
                 href={item.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'group relative flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-300 outline-none transition-all duration-200',
+                  'group relative flex h-12 min-w-16 flex-col items-center justify-center gap-1 rounded-lg px-2 text-[10px] font-medium text-slate-300 outline-none transition-all duration-200 lg:h-11 lg:min-w-0 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-sm',
                   'hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-orange-500/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061f42]',
                   active &&
                     'bg-orange-600 text-white shadow-lg shadow-orange-950/30 hover:bg-orange-600',
@@ -90,27 +90,35 @@ export function AppSidebar() {
               >
                 <span
                   className={cn(
-                    'absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-white/0 transition-colors',
+                    'absolute bottom-0 left-1/2 top-auto h-1 w-6 -translate-x-1/2 translate-y-0 rounded-t-full bg-white/0 transition-colors lg:left-0 lg:top-1/2 lg:h-6 lg:w-1 lg:-translate-x-0 lg:-translate-y-1/2 lg:rounded-r-full',
                     active && 'bg-white',
                   )}
                 />
                 <span
                   className={cn(
-                    'flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white/5 text-slate-300 transition-colors',
+                    'flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-white/5 text-slate-300 transition-colors lg:h-8 lg:w-8',
                     'group-hover:bg-white/10 group-hover:text-white',
                     active && 'bg-white/15 text-white',
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5 lg:h-4 lg:w-4" />
                 </span>
                 <span className="truncate">{item.label}</span>
               </Link>
             );
           })}
         </div>
+        <Button
+          onClick={() => setLogoutOpen(true)}
+          variant="ghost"
+          className="h-12 min-w-16 shrink-0 flex-col gap-1 rounded-lg px-2 text-[10px] text-red-300 hover:bg-white/10 hover:text-red-200 lg:hidden"
+        >
+          <LogOutIcon className="h-3.5 w-3.5" />
+          Log out
+        </Button>
       </nav>
 
-      <div className="border-t border-white/10 bg-slate-950/10 px-4 py-5">
+      <div className="hidden border-t border-white/10 bg-slate-950/10 px-4 py-5 lg:block">
         <div className="mb-4 flex items-center gap-3 rounded-xl bg-white/[0.04] p-3 ring-1 ring-white/10">
           <Avatar className="h-10 w-10 bg-white text-slate-900 ring-2 ring-white/20">
             <AvatarFallback className="bg-white text-sm font-bold text-[#061f42]">

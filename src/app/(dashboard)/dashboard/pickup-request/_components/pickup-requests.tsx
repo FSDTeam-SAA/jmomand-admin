@@ -182,7 +182,7 @@ export default function PickupRequests() {
       count={schedulesQuery.data?.length ?? 0}
       actions={
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative min-w-[280px]">
+          <div className="relative w-full min-w-0 lg:min-w-[280px]">
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
