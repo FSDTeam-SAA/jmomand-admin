@@ -322,7 +322,7 @@ export default function Settings() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f7f9fc] p-6 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-[#f7f9fc] p-4 sm:p-6">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#ff5e1a] mx-auto"></div>
           <p className="mt-4 text-slate-600">Loading profile...</p>
@@ -332,7 +332,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fc] p-6 flex flex-col gap-5 container font-sans antialiased">
+    <div className="container flex min-h-screen flex-col gap-5 bg-[#f7f9fc] p-4 font-sans antialiased sm:p-6">
       {/* 1. Profile Header Card */}
       <Card className="bg-white border-[#eef2f6] py-3 shadow-sm rounded-xl overflow-hidden">
         <CardContent className="flex items-center gap-4">

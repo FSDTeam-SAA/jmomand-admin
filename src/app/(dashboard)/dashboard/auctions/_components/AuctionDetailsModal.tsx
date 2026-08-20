@@ -85,7 +85,7 @@ export function AuctionDetailsModal({
       <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-gray-100 max-h-[92vh] flex flex-col overflow-hidden font-sans">
         
         {/* --- Modal Header --- */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100 bg-white sticky top-0 z-10">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-orange-50 text-[#FF5A1F] rounded-xl border border-orange-100">
               <Gavel className="w-5 h-5" />
@@ -113,7 +113,7 @@ export function AuctionDetailsModal({
         </div>
 
         {/* --- Modal Body --- */}
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-[#FAFAFA]">
+        <div className="flex-1 space-y-6 overflow-y-auto bg-[#FAFAFA] p-4 sm:p-6">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-3 bg-white rounded-xl border border-gray-100">
               <Loader2 className="w-8 h-8 animate-spin text-[#FF5A1F]" />
@@ -382,7 +382,7 @@ export function AuctionDetailsModal({
         </div>
 
         {/* --- Modal Footer --- */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-white flex justify-end sticky bottom-0 z-10">
+        <div className="sticky bottom-0 z-10 flex justify-end border-t border-gray-100 bg-white px-4 py-4 sm:px-6">
           <button
             onClick={onClose}
             className="px-6 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"

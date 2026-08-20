@@ -126,7 +126,7 @@ export default function CreateAuctionPage() {
                     <div className="lg:col-span-2 space-y-6">
 
                         {/* 1. Basic Details */}
-                        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
+                        <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
                             <h2 className="text-base font-bold text-slate-900">Auction Details</h2>
 
                             <div>
@@ -218,7 +218,7 @@ export default function CreateAuctionPage() {
                         </div>
 
                         {/* 3. Pricing Configuration */}
-                        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-4">
+                        <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
                             <h2 className="text-base font-bold text-slate-900">Bidding & Pricing Settings</h2>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -253,7 +253,7 @@ export default function CreateAuctionPage() {
                         </div>
 
                         {/* 4. Auction Schedule */}
-                        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-5">
+                        <div className="space-y-5 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
                             <h2 className="text-base font-bold text-slate-900">Auction Schedule</h2>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -293,7 +293,7 @@ export default function CreateAuctionPage() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                                     {durationDayOptions.map((days) => {
                                         const isSelected = !isCustomAuctionDuration && auctionDurationDays === days;
                                         return (
@@ -352,7 +352,7 @@ export default function CreateAuctionPage() {
                         </div>
 
                         {/* 5. PickUp Schedule */}
-                        <div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm space-y-5">
+                        <div className="space-y-5 rounded-2xl border border-slate-100 bg-white p-4 shadow-sm sm:p-6">
                             <h2 className="text-base font-bold text-slate-900">PickUp Schedule</h2>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -418,7 +418,7 @@ export default function CreateAuctionPage() {
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+                                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-8">
                                     {durationDayOptions.map((days) => {
                                         const isSelected = !isCustomPickupDuration && pickupDurationDays === days;
                                         return (

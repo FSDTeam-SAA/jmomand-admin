@@ -212,30 +212,16 @@ export default function AddInventory({ productId }: { productId?: string }) {
     if (selectedFiles.length > 0) {
       // Updating with files replaces the backend's current image set, so show
       // only the replacement selection instead of mixing it with old previews.
-      const availableSlots = isEditing ? 5 : 5 - images.length;
-
-      if (availableSlots <= 0) {
-        alert('You can upload maximum 5 product images');
-        e.target.value = '';
-        return;
-      }
-
-      const previews = selectedFiles
-        .map((file) => ({
-          id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
-          url: URL.createObjectURL(file),
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          file,
-        }))
-        .slice(0, availableSlots);
+      const previews = selectedFiles.map((file) => ({
+        id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
+        url: URL.createObjectURL(file),
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        file,
+      }));
 
       setImages((prev) => (isEditing ? previews : [...prev, ...previews]));
-
-      if (selectedFiles.length > availableSlots) {
-        alert('Only first 5 product images can be uploaded');
-      }
     }
 
     e.target.value = '';
@@ -392,7 +378,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
         <div className="lg:col-span-2 space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* SECTION 1: BASIC DETAILS */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 transition-all">
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm transition-all sm:p-8">
               <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
                 <span className="p-2 bg-emerald-50 text-[#004242] rounded-lg">
                   <Sparkles className="w-4 h-4" />
@@ -691,7 +677,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
             </div>
 
             {/* SECTION 2: PRODUCT IMAGES MULTIPLE ZONE */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 transition-all">
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm transition-all sm:p-8">
               <div className="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
                 <span className="p-2 bg-emerald-50 text-[#004242] rounded-lg">
                   <ImageIcon className="w-4 h-4" />
@@ -701,7 +687,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
                 </h2>
               </div>
 
-              <div className="border-2 border-dashed border-slate-200 hover:border-[#004242]/50 rounded-xl p-6 sm:p-8 flex flex-col items-center justify-center bg-slate-50/30 hover:bg-slate-50/80 transition-all duration-200 relative group cursor-pointer">
+              <div className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/30 p-4 transition-all duration-200 hover:border-[#004242]/50 hover:bg-slate-50/80 group cursor-pointer sm:p-8">
                 <input
                   id={imageInputId}
                   type="file"
@@ -717,7 +703,7 @@ export default function AddInventory({ productId }: { productId?: string }) {
                   Click to upload product photos
                 </span>
                 <span className="text-xs text-slate-400 mt-1">
-                  Upload up to 10 high-resolution images (PNG, JPG)
+                  Upload high-resolution images (PNG, JPG)
                 </span>
               </div>
 

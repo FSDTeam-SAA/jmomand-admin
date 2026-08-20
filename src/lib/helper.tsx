@@ -24,7 +24,7 @@ export function PageShell({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-6">
+    <section className="min-w-0 space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-medium text-[#FF5A1F]">Admin Dashboard</p>
@@ -33,7 +33,7 @@ export function PageShell({
             {typeof count === 'number' && <span className="ml-2 text-[#FF5A1F]">({count})</span>}
           </h1>
         </div>
-        {actions}
+        {actions && <div className="w-full sm:w-auto">{actions}</div>}
       </div>
       {children}
     </section>
@@ -50,7 +50,7 @@ export function SearchBox({
   placeholder: string;
 }) {
   return (
-    <div className="relative min-w-[260px]">
+    <div className="relative w-full min-w-0 sm:min-w-[260px]">
       <Input
         value={value}
         onChange={(event) => onChange(event.target.value)}
