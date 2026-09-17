@@ -328,29 +328,35 @@ export function InvoiceDetail({ invoice }: { invoice: Invoice }) {
         </div>
         <div className="p-4 space-y-2 text-xs sm:text-sm">
           <div className="flex justify-between text-slate-600">
-            <span>Subtotal</span>
+            <span>Winning Bid</span>
             <span>{currencyFormatter.format(invoice.subtotal ?? invoice.amount ?? 0)}</span>
           </div>
 
-          {Boolean(invoice.buyerPremiumAmount) && (
+          {(invoice.buyerPremiumAmount !== undefined || invoice.buyerPremiumRate !== undefined) && (
             <div className="flex justify-between text-slate-600">
-              <span>{invoice.buyerPremiumLabel || "Buyer's Premium"}</span>
-              <span>+{currencyFormatter.format(invoice.buyerPremiumAmount)}</span>
+              <span>Buyer Premium ({invoice.buyerPremiumRate ?? 15}%)</span>
+              <span>+{currencyFormatter.format(invoice.buyerPremiumAmount ?? 0)}</span>
             </div>
           )}
 
-          {Boolean(invoice.salesTaxAmount) && (
+          {(invoice.salesTaxAmount !== undefined || invoice.stateTaxRate !== undefined) && (
             <div className="flex justify-between text-slate-600">
               <span>
-                Sales Tax ({invoice.stateTaxLabel || invoice.stateTaxState || 'State Tax'} @{' '}
-                {invoice.stateTaxRate}%)
+                {invoice.stateTaxLabel || 'Virginia Sales Tax'} ({invoice.stateTaxRate ?? 5.5}%)
               </span>
-              <span>+{currencyFormatter.format(invoice.salesTaxAmount)}</span>
+              <span>+{currencyFormatter.format(invoice.salesTaxAmount ?? 0)}</span>
+            </div>
+          )}
+
+          {(invoice.creditCardFeeAmount !== undefined || invoice.creditCardFeeRate !== undefined) && (
+            <div className="flex justify-between text-slate-600">
+              <span>Credit Card Fee ({invoice.creditCardFeeRate ?? 3.3}%)</span>
+              <span>+{currencyFormatter.format(invoice.creditCardFeeAmount ?? 0)}</span>
             </div>
           )}
 
           <div className="pt-2 border-t border-slate-100 flex justify-between font-semibold text-slate-900 text-sm">
-            <span>Total Amount</span>
+            <span>Final Total</span>
             <span>{currencyFormatter.format(invoice.totalAmount ?? invoice.amount ?? 0)}</span>
           </div>
         </div>

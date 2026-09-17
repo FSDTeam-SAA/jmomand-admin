@@ -71,14 +71,17 @@ export type Invoice = {
   paymentFailureReason?: string;
   createdAt?: string;
   totalAmount?: number;
-  subtotal: number;
-  buyerPremiumAmount: number;
-  buyerPremiumLabel: number;
-  salesTaxAmount: number;
-  stateTaxLabel: number;
-  stateTaxRate: number;
-  stateTaxState: number;
-  pickupTokenHash: string;
+  subtotal?: number;
+  buyerPremiumRate?: number;
+  buyerPremiumAmount?: number;
+  buyerPremiumLabel?: string | number;
+  salesTaxAmount?: number;
+  stateTaxLabel?: string | number;
+  stateTaxRate?: number;
+  stateTaxState?: string | number;
+  creditCardFeeRate?: number;
+  creditCardFeeAmount?: number;
+  pickupTokenHash?: string;
 };
 
 export type PickupSlot = {
