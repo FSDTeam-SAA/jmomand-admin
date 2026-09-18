@@ -1,8 +1,7 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
 import {
   Select,
   SelectContent,
@@ -61,78 +60,90 @@ export function PickupStatusActionBar({
   const hasStatusChanged = selectedStatus !== currentStatus;
 
   return (
-    <div className="px-6 py-4 transition-all">
-      <div className="flex flex-col gap-3">
-        {/* Main Action Bar */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
-          {/* Left: Status Selector + Current State Badge */}
-          <div className="flex flex-row items-center gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                Status:
-              </span>
-            </div>
+    <div className="border-t border-slate-200/80 bg-slate-50/90 px-6 py-3.5 transition-all">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        {/* Left: Status Selector + Indicator */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              Fulfillment Status:
+            </span>
+          </div>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Select value={selectedStatus} onValueChange={onStatusChange}>
-                <SelectTrigger className="h-10 w-full sm:w-[210px] bg-white border-slate-200 text-xs font-semibold text-slate-800 rounded-xl shadow-2xs focus:ring-2 focus:ring-slate-900/10 transition-all">
-                  <SelectValue placeholder="Select status">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          statusOptionsConfig[selectedStatus]?.dotColor || 'bg-slate-400'
-                        }`}
-                      />
-                      <span>{statusOptionsConfig[selectedStatus]?.label}</span>
-                    </div>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent align="start" className="rounded-xl border-slate-200 shadow-xl p-1">
-                  {(Object.keys(statusOptionsConfig) as PickupScheduleStatus[]).map((status) => {
-                    const option = statusOptionsConfig[status];
-                    return (
-                      <SelectItem
-                        key={status}
-                        value={status}
-                        className="text-xs font-medium rounded-lg py-2 cursor-pointer focus:bg-slate-100"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className={`h-2 w-2 rounded-full ${option.dotColor}`} />
-                          <div className="flex flex-col">
-                            <span className="font-semibold text-slate-900">{option.label}</span>
-                            <span className="text-[10px] text-slate-400">{option.description}</span>
-                          </div>
+          <div className="flex items-center gap-2">
+            <Select value={selectedStatus} onValueChange={onStatusChange}>
+              <SelectTrigger className="h-10 w-[220px] rounded-xl border-slate-200 bg-white text-xs font-semibold text-slate-800 shadow-2xs transition-all hover:border-slate-300 focus:ring-2 focus:ring-[#FF5A1F]/20">
+                <SelectValue placeholder="Select status">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        statusOptionsConfig[selectedStatus]?.dotColor || 'bg-slate-400'
+                      }`}
+                    />
+                    <span className="font-semibold text-slate-900">
+                      {statusOptionsConfig[selectedStatus]?.label}
+                    </span>
+                  </div>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="start" className="rounded-xl border-slate-200 p-1 shadow-xl">
+                {(Object.keys(statusOptionsConfig) as PickupScheduleStatus[]).map((status) => {
+                  const option = statusOptionsConfig[status];
+                  return (
+                    <SelectItem
+                      key={status}
+                      value={status}
+                      className="cursor-pointer rounded-lg py-2 text-xs font-medium focus:bg-slate-100"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`h-2 w-2 rounded-full ${option.dotColor}`} />
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-900">{option.label}</span>
+                          <span className="text-[10px] text-slate-400">{option.description}</span>
                         </div>
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
 
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2 justify-end">
-            <Button
-              type="button"
-              disabled={!hasStatusChanged || isUpdating}
-              onClick={onUpdateStatus}
-              className={`h-10 px-6 text-xs font-bold tracking-wide transition-all shadow-xs rounded-xl flex items-center gap-2 ${
-                hasStatusChanged
-                  ? 'bg-[#FE6819] hover:bg-[#FE6819] text-white shadow-md'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              }`}
-            >
-              {isUpdating ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Updating...
-                </>
-              ) : (
-                <>Save</>
-              )}
-            </Button>
+            {hasStatusChanged && (
+              <span className="hidden items-center gap-1.5 text-xs text-amber-700 md:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                Unsaved ({statusOptionsConfig[currentStatus]?.label} →{' '}
+                {statusOptionsConfig[selectedStatus]?.label})
+              </span>
+            )}
           </div>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            type="button"
+            disabled={!hasStatusChanged || isUpdating}
+            onClick={onUpdateStatus}
+            className={`h-10 px-5 text-xs font-bold tracking-wide transition-all rounded-xl flex items-center gap-2 ${
+              hasStatusChanged
+                ? 'bg-[#FF5A1F] hover:bg-[#e04f1a] text-white shadow-sm hover:shadow active:scale-[0.98]'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-200'
+            }`}
+          >
+            {isUpdating ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Updating...
+              </>
+            ) : hasStatusChanged ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                Save Status
+              </>
+            ) : (
+              'Status Saved'
+            )}
+          </Button>
         </div>
       </div>
     </div>

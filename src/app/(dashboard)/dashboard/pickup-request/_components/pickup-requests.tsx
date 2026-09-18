@@ -4,11 +4,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import type { ReactNode } from 'react';
 import { useMemo, useState } from 'react';
-import { CalendarClock, Eye, Package, Search, UserRound } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Eye, Package, Search, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiRequest } from '@/lib/api-client';
 import {
   Badge,
+  currencyFormatter,
   DetailDialog,
   formatDate,
   formatTime,
@@ -18,7 +19,7 @@ import {
   TableState,
 } from '@/lib/helper';
 import { Button } from '@/components/ui/button';
-import { PickupRequestDetails } from './pickup-request-details';
+import { calculatePickupHoldingFee, PickupRequestDetails } from './pickup-request-details';
 
 export type PickupScheduleStatus =
   | 'requested'
@@ -272,10 +273,15 @@ export default function PickupRequests() {
       </div>
 
       <DetailDialog
-        title="Pickup Request"
+        title={
+          selected?._id
+            ? `Pickup Request #REQ-${selected._id.slice(-6).toUpperCase()}`
+            : 'Pickup Request'
+        }
+        description="Review scheduled pickup window, winner customer contact, product details, and manage fulfillment status."
         open={Boolean(selected)}
         onOpenChange={(open) => !open && setSelected(null)}
-        contentClassName="sm:max-w-[640px] lg:max-w-[640px]"
+        contentClassName="sm:max-w-4xl lg:max-w-5xl"
         bodyClassName="overflow-hidden p-0"
       >
         {selected && (
@@ -300,6 +306,7 @@ function PickupScheduleRow({
   onView: (schedule: PickupSchedule) => void;
 }) {
   const product = schedule.auctionProductId?.productId;
+  const holdingFee = calculatePickupHoldingFee(schedule);
 
   return (
     <tr className="transition-colors hover:bg-slate-50/70">
@@ -335,7 +342,15 @@ function PickupScheduleRow({
       </td>
 
       <td className="px-5 py-4 align-top font-medium text-slate-700">
-        {formatDate(schedule.pickupDate)}
+        <div>
+          <span>{formatDate(schedule.pickupDate)}</span>
+          {holdingFee.isOverdue && (
+            <p className="mt-1 flex items-center gap-1 font-sans text-[11px] font-bold text-rose-600">
+              <AlertTriangle className="h-3 w-3 shrink-0 text-rose-500" />
+              {holdingFee.overdueDays}d Late (+{currencyFormatter.format(holdingFee.totalHoldingFee)})
+            </p>
+          )}
+        </div>
       </td>
 
       <td className="px-5 py-4 align-top">
@@ -345,7 +360,14 @@ function PickupScheduleRow({
       </td>
 
       <td className="px-5 py-4 align-top">
-        <Badge value={schedule.status} />
+        <div className="flex flex-col items-start gap-1">
+          <Badge value={schedule.status} />
+          {holdingFee.isOverdue && (
+            <span className="rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+              Late Fee Active
+            </span>
+          )}
+        </div>
       </td>
 
       <td className="px-5 py-4 text-right align-top">
