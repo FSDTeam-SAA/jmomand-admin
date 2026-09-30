@@ -44,7 +44,7 @@ export default function ProductDashboard() {
       if (!token) throw new Error("Please login again");
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/inventory?searchTerm=${searchTerm}&page=${page}&limit=${limit}&sortOrder=${order}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/inventory?searchTerm=${encodeURIComponent(searchTerm)}&page=${page}&limit=${limit}&sortOrder=${order}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -106,7 +106,7 @@ export default function ProductDashboard() {
             Inventory Management
           </h1>
           <p className="text-sm text-slate-500">
-            Monitor, update, and manage your store&apos;s stock and listings.
+            Items stay in inventory after auctions close. Reuse unsold items in a new auction.
           </p>
         </div>
 
@@ -208,6 +208,7 @@ export default function ProductDashboard() {
                 <th className="py-3.5 px-4">Condition</th>
                 <th className="py-3.5 px-4">Type</th>
                 <th className="py-3.5 px-4">Price</th>
+                <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4">Quantity</th>
                 <th className="py-3.5 px-6 text-right">Actions</th>
               </tr>
@@ -215,7 +216,7 @@ export default function ProductDashboard() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
                     Loading Products...
                   </td>
                 </tr>
@@ -297,6 +298,10 @@ export default function ProductDashboard() {
                         )}
                       </td>
 
+                      <td className="py-4 px-4 whitespace-nowrap capitalize">
+                        {product.inventoryStatus?.replace(/_/g, " ") || "—"}
+                      </td>
+
                       {/* Quantity */}
                       <td className="py-4 px-4 whitespace-nowrap">
                         <span
@@ -330,7 +335,7 @@ export default function ProductDashboard() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                  <td colSpan={9} className="py-12 text-center text-slate-400">
                     No products found matching your search.
                   </td>
                 </tr>

@@ -20,17 +20,18 @@ interface UseDeleteProductOptions {
 export const useAuctionProductsQuery = (
     token: string | null,
     searchTerm: string = "",
-    isOpen: boolean = true
+    isOpen: boolean = true,
+    page: number = 1
 ) => {
     return useQuery({
-        queryKey: ["auctionProductsModal", searchTerm],
+        queryKey: ["auctionProductsModal", searchTerm, page],
         queryFn: async () => {
             if (!token) return { data: [] };
 
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_BACKEND_URL}/products/auctions?searchTerm=${encodeURIComponent(
                     searchTerm
-                )}&limit=30`,
+                )}&page=${page}&limit=30`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -142,6 +143,8 @@ export const useAddAuctionHook = (token: string | null) => {
             await Promise.all([
                 queryClient.invalidateQueries({ queryKey: ["auctionData"] }),
                 queryClient.invalidateQueries({ queryKey: ["inventoryData"] }),
+                queryClient.invalidateQueries({ queryKey: ["inventoryStats"] }),
+                queryClient.invalidateQueries({ queryKey: ["auctionProductsModal"] }),
                 queryClient.invalidateQueries({ queryKey: ["dashboardReports"] }),
             ]);
 

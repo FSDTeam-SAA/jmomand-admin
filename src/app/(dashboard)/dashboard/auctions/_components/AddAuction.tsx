@@ -171,6 +171,9 @@ export default function CreateAuctionPage() {
                                 )}
                             </div>
 
+                            <p className="mb-4 text-xs text-slate-500">
+                                Reuse available or unsold inventory with its saved photos, description, and reserve price.
+                            </p>
                             <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-none">
                                 {selectedItems.map((item) => {
                                     const itemId = getItemId(item);
@@ -212,7 +215,7 @@ export default function CreateAuctionPage() {
                                     className="flex items-center justify-center gap-2 border-2 border-dashed border-slate-200 hover:border-orange-400 text-slate-500 hover:text-orange-500 rounded-xl p-3 min-w-[170px] min-h-[66px] shrink-0 transition-all text-xs font-semibold bg-slate-50/50 hover:bg-orange-50/20 cursor-pointer"
                                 >
                                     <Plus className="w-4 h-4" />
-                                    <span>Add More Items</span>
+                                    <span>Select from Existing Inventory</span>
                                 </button>
                             </div>
                         </div>

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Search, X, Check, Package, Loader2 } from 'lucide-react';
+import { Pagination } from '@/components/pagination';
 import { useAuctionProductsQuery } from '@/features/hook/useAuctionHook';
 
 export interface InventoryProduct {
@@ -9,7 +10,8 @@ export interface InventoryProduct {
   inventoryId: string;
   title: string;
   category: string;
-  price: number;
+  price?: number;
+  reservePrice?: number;
   condition?: string;
   inventoryStatus?: string;
   images?: { url: string; public_id?: string }[];
@@ -31,6 +33,7 @@ export default function ProductSelectModal({
   onConfirmSelection,
 }: ProductSelectModalProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
   const [selectedMap, setSelectedMap] = useState<Record<string, InventoryProduct>>({});
 
   // Helper to extract string ID from string or MongoDB $oid object
@@ -46,6 +49,7 @@ export default function ProductSelectModal({
     if (isOpen) {
       setSelectedMap({});
       setSearchTerm('');
+      setPage(1);
     }
   }, [isOpen]);
 
@@ -55,7 +59,7 @@ export default function ProductSelectModal({
     isLoading,
     isError,
     error,
-  } = useAuctionProductsQuery(token || null, searchTerm, isOpen);
+  } = useAuctionProductsQuery(token || null, searchTerm, isOpen, page);
 
   const products: InventoryProduct[] = responseData?.data || [];
 
@@ -84,17 +88,15 @@ export default function ProductSelectModal({
       selectableProducts.length > 0 &&
       selectableProducts.every((p) => !!selectedMap[getProductId(p)]);
 
-    if (allSelectableChecked) {
-      // Clear current selection
-      setSelectedMap({});
-    } else {
-      // Select all available products in current view
-      const newMap: Record<string, InventoryProduct> = {};
-      selectableProducts.forEach((p) => {
-        newMap[getProductId(p)] = p;
+    setSelectedMap((previous) => {
+      const next = { ...previous };
+      selectableProducts.forEach((product) => {
+        const id = getProductId(product);
+        if (allSelectableChecked) delete next[id];
+        else next[id] = product;
       });
-      setSelectedMap(newMap);
-    }
+      return next;
+    });
   };
 
   // Confirm selection & log output
@@ -117,9 +119,9 @@ export default function ProductSelectModal({
         {/* Modal Header */}
         <div className="flex items-center justify-between p-5 border-b border-slate-100">
           <div>
-            <h3 className="text-base font-bold text-slate-900">Select Items for Auction</h3>
+            <h3 className="text-base font-bold text-slate-900">Select from Existing Inventory</h3>
             <p className="text-xs text-slate-500">
-              Select multiple products to include in this auction campaign
+              Available and unsold items retain their photos, description, and reserve price.
             </p>
           </div>
           <button
@@ -136,7 +138,10 @@ export default function ProductSelectModal({
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1);
+              }}
               placeholder="Search product title or inventory ID..."
               className="w-full h-10 pl-10 pr-4 bg-white border border-slate-200 text-xs font-medium text-slate-700 placeholder-slate-400 rounded-xl outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20 transition-all"
             />
@@ -169,7 +174,7 @@ export default function ProductSelectModal({
                             ? 'bg-[#FF5A1F] border-[#FF5A1F] text-white'
                             : 'border-slate-300 bg-white'
                         }`}
-                        title="Select All Available"
+                        title="Select all items on this page"
                       >
                         {isAllSelected && <Check className="w-3 h-3 stroke-[3]" />}
                       </div>
@@ -177,7 +182,8 @@ export default function ProductSelectModal({
                     <th className="py-2.5 px-3">Product</th>
                     <th className="py-2.5 px-3">Inventory ID</th>
                     <th className="py-2.5 px-3">Category</th>
-                    <th className="py-2.5 px-3 text-right">Price</th>
+                    <th className="py-2.5 px-3">Status</th>
+                    <th className="py-2.5 px-3 text-right">Reserve Price</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -238,8 +244,13 @@ export default function ProductSelectModal({
 
                         <td className="py-3 px-3 text-slate-500">{product.category || '-'}</td>
 
+                        <td className="py-3 px-3">
+                          <span className="whitespace-nowrap rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+                            {product.inventoryStatus === 'unsold' ? 'Unsold — ready to relist' : 'Available'}
+                          </span>
+                        </td>
                         <td className="py-3 px-3 text-right font-bold text-slate-900">
-                          ${product.price}
+                          {product.reservePrice != null ? `$${product.reservePrice.toFixed(2)}` : 'Not set'}
                         </td>
                       </tr>
                     );
@@ -249,10 +260,20 @@ export default function ProductSelectModal({
             </div>
           ) : (
             <div className="py-12 text-center text-xs text-slate-400">
-              No available auction products found.
+              No available or unsold inventory matches your search.
             </div>
           )}
         </div>
+
+        {responseData?.meta?.totalPage > 1 && (
+          <div className="border-t border-slate-100 px-4">
+            <Pagination
+              currentPage={page}
+              totalPages={responseData.meta.totalPage}
+              onPageChange={setPage}
+            />
+          </div>
+        )}
 
         {/* Footer */}
         <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between">

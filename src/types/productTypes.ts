@@ -7,6 +7,7 @@ export interface InventoryItem {
   condition: string;
   type: string;
   quantity: number;
+  inventoryStatus?: string;
   price: number;
   retailPrice?: number;
   discountPercentage?: number;
