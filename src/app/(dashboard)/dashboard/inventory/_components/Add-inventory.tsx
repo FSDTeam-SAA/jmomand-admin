@@ -353,12 +353,12 @@ export default function AddInventory({ productId }: { productId?: string }) {
 
     if (type === 'for_sale') {
       formData.append('price', price);
-      if (retailPrice) formData.append('retailPrice', retailPrice);
       formData.append('quantity', quantity);
     } else {
       formData.append('day', day);
       formData.append('reservePrice', reservePrice);
     }
+    if (retailPrice) formData.append('retailPrice', retailPrice);
 
     productMutation.mutate(formData);
   };
@@ -518,19 +518,6 @@ export default function AddInventory({ productId }: { productId?: string }) {
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-slate-700 text-xs font-semibold uppercase tracking-wide">
-                          Retail Price ($)
-                        </Label>
-                        <Input
-                          type="number"
-                          min="1"
-                          placeholder="0.00"
-                          value={retailPrice}
-                          onChange={(e) => setRetailPrice(e.target.value)}
-                          className="h-11 rounded-lg border-slate-200 bg-white focus-visible:ring-2 focus-visible:ring-[#004242]/20 focus-visible:border-[#004242] text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-slate-700 text-xs font-semibold uppercase tracking-wide">
                           Quantity <span className="text-rose-500">*</span>
                         </Label>
                         <Input
@@ -572,6 +559,20 @@ export default function AddInventory({ productId }: { productId?: string }) {
                       </div>
                     </>
                   )}
+                  <div className="space-y-1.5">
+                    <Label className="text-slate-700 text-xs font-semibold uppercase tracking-wide">
+                      Retail Price ($)
+                    </Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={retailPrice}
+                      onChange={(e) => setRetailPrice(e.target.value)}
+                      className="h-11 rounded-lg border-slate-200 bg-white focus-visible:ring-2 focus-visible:ring-[#004242]/20 focus-visible:border-[#004242] text-sm"
+                    />
+                  </div>
                 </div>
 
                 {/* Colors Multiple Array Input Field Setup */}

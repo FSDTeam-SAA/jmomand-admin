@@ -10,6 +10,7 @@ export interface InventoryItem {
   inventoryStatus?: string;
   price: number;
   retailPrice?: number;
+  reservePrice?: number;
   discountPercentage?: number;
   manufacturer?: string;
   color?: string[];
